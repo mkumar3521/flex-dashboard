@@ -1,0 +1,11 @@
+#1 Missing Monthly_Report_AWS.yaml file
+
+#2 Read_corridors function implementation is reading corridors from a file, and file is missing in the folder
+# corridors_filename_s3: Corridors_Mark1.xlsx
+# corridors_TMCs_filename_s3: Corridor_TMCs_Mark1.xlsx
+# cctv_config_filename: Cameras_Mark1.xlsx
+
+# 3 Missing parse_cameras.py file which is mentioned in run_uptime_tasks in Monthly_Report_Calcs_1.py
+# 4 Missing parse_rsus.py file which is mentioned in run_uptime_tasks in Monthly_Report_Calcs_1.py
+# 5 Missing get_travel_times_v2.py file which is mentioned in run_uptime_tasks in Monthly_Report_Calcs_1.py
+# 6 Missing get_travel_times_1min_v2.py file which is mentioned in run_uptime_tasks in Monthly_Report_Calcs_1.py

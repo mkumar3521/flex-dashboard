@@ -1,0 +1,14 @@
+pyodbc
+sqlalchemy
+boto3
+pandas
+pyyaml
+plotly
+dash
+pyarrow
+s3fs
+geopandas
+shapely
+geopy
+joblib
+psutil
