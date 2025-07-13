@@ -12,3 +12,5 @@ shapely
 geopy
 joblib
 psutil
+openpyxl
+PyAthena

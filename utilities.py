@@ -16,6 +16,7 @@ from pathlib import Path
 import joblib
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
+import multiprocessing
 
 fs = s3fs.S3FileSystem()
 
@@ -95,22 +96,19 @@ def get_last_modified_s3(bucket, object_key):
         logging.error("Credentials not available.")
         return None
 
-# TODO
-def get_usable_cores(GB=8):
-    """Gets the number of usable cores based on available memory."""
-    if os.name == 'nt':  # Windows
 
-        mem = psutil.virtual_memory().total
-        cores = max(int(mem / (GB * 1e9)), 1)
-        return min(cores, os.cpu_count() - 1)
-    elif os.name == 'posix':  # Linux
-        with open('/proc/meminfo') as f:
-            meminfo = f.read()
-        mem = int(re.search(r"MemAvailable:\s+(\d+)", meminfo).group(1)) * 1024
-        cores = max(int(mem / (GB * 1e9)), 1)
-        return min(cores, os.cpu_count() - 1)
+def get_usable_cores():
+    total_memory_gb = psutil.virtual_memory().total / (1024 ** 3)  # in GB
+    cpu_count = multiprocessing.cpu_count()
+
+    # Example logic (customize as needed):
+    if total_memory_gb > 16:
+        return max(1, cpu_count - 2)
+    elif total_memory_gb > 8:
+        return max(1, cpu_count - 4)
     else:
-        raise OSError("Unknown operating system.")
+        return 1
+
 
 
 def convert_to_utc(df):

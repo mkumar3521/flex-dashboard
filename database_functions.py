@@ -7,8 +7,9 @@ import json
 import os
 import numpy as np
 import re
-import yaml
 from Monthly_Report_UI_Functions import RTOP1_ZONES, RTOP2_ZONES
+import yaml
+import Monthly_Report_Functions as mrf
 
 # Load credentials
 with open("Monthly_Report_AWS.yaml", "r") as file:
@@ -233,3 +234,7 @@ def query_data(metric, level="corridor", resolution="monthly", hourly=False, zon
         df["Hour"] = pd.to_datetime(df["Hour"])
 
     return df
+
+if __name__ == "__main__":
+    athena = get_athena_connection(mrf.conf["athena"])
+    print("athena", athena)

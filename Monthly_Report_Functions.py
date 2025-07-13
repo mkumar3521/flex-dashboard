@@ -25,7 +25,7 @@ system_name = platform.system()
 if system_name == "Windows":
     home_path = str(Path.home().parent)
     python_path = os.path.join(home_path, "Anaconda3", "python.exe")
-elif system_name == "Linux":
+elif system_name == "Linux" or system_name == "Darwin":
     home_path = str(Path("~").expanduser())
     python_path = os.path.join(home_path, "miniconda3", "bin", "python")
 else:

@@ -2,13 +2,14 @@ import pandas as pd
 from datetime import datetime, timedelta
 import boto3
 import pyarrow.feather as feather
+import io
 
 
 def get_corridors(corr_fn, filter_signals=True, mark_only=False):
     cols = {
         "SignalID": "float64",
-        "Zone_Group": "string",
-        "Zone": "string",
+        "Contract": "string",
+        "District": "string",
         "Corridor": "string",
         "Subcorridor": "string",
         "Agency": "string",
@@ -33,22 +34,24 @@ def get_corridors(corr_fn, filter_signals=True, mark_only=False):
         df = df[(df["SignalID"] > 0) & (df["Include"] == True)]
 
     if mark_only:
-        df = df[(df["Zone_Group"] == df["Zone"]) | (df["Zone_Group"].isin(["RTOP1", "RTOP2"]))]
+        df = df[(df["Contract"] == df["District"]) | (df["Contract"].isin(["RTOP1", "RTOP2"]))]
 
     df["Modified"] = df["Modified"].fillna(pd.Timestamp("1900-01-01"))
-    df = df.sort_values("Modified").drop_duplicates(subset=["SignalID", "Zone", "Corridor"], keep="last")
+    # Print Volumne names in df
+    print("Columns in DataFrame:", df.columns.tolist())
+    df = df.sort_values("Modified").drop_duplicates(subset=["SignalID", "District", "Corridor"], keep="last")
     df = df.dropna(subset=["Corridor"])
 
     df["Name"] = df["Main Street Name"] + " @ " + df["Side Street Name"]
     df["Description"] = df["SignalID"].astype(str) + ": " + df["Name"]
-
+    #
     return df[[
-        "SignalID", "Zone", "Zone_Group", "Corridor", "Subcorridor", "Milepost",
+        "SignalID", "District", "Contract", "Corridor", "Subcorridor", "Milepost",
         "Agency", "Name", "Asof", "Latitude", "Longitude", "Description"
     ]]
 
 def check_corridors(corridors):
-    distinct_corridors = corridors[["Zone", "Zone_Group", "Corridor"]].drop_duplicates()
+    distinct_corridors = corridors[["District", "Contract", "Corridor"]].drop_duplicates()
 
     # Check 1: Same Corridor in multiple Zones
     corridors_in_multiple_zones = distinct_corridors.groupby("Corridor").size()
@@ -73,12 +76,12 @@ def get_cam_config(object, bucket, corridors):
     cam_config0 = cam_config0[cam_config0["Include"] == True]
     cam_config0 = cam_config0[["CameraID", "Location", "MaxView ID", "As_of_Date"]].drop_duplicates()
 
-    corrs = corridors[["SignalID", "Zone_Group", "Zone", "Corridor", "Subcorridor"]]
+    corrs = corridors[["SignalID", "Contract", "District", "Corridor", "Subcorridor"]]
     cam_config = corrs.merge(cam_config0, left_on="SignalID", right_on="MaxView ID", how="left")
     cam_config = cam_config.dropna(subset=["CameraID"])
     cam_config["Description"] = cam_config["CameraID"] + ": " + cam_config["Location"]
 
-    return cam_config.sort_values(["Zone_Group", "Zone", "Corridor", "CameraID"])
+    return cam_config.sort_values(["Contract", "District", "Corridor", "CameraID"])
 
 def get_ped_config(bucket, date_):
     date_ = max(pd.Timestamp(date_), pd.Timestamp("2019-01-01"))
@@ -131,7 +134,7 @@ def get_latest_det_config(conf):
 
             # Read the Feather file from S3
             obj = s3.get_object(Bucket=conf["bucket"], Key=object_key)
-            det_config = feather.read_feather(obj["Body"])
+            det_config = feather.read_feather(io.BytesIO(obj["Body"].read()))
             return det_config
         else:
             # Move to the previous day
